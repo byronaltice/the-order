@@ -10,7 +10,10 @@ import { IonicStorageModule } from '@ionic/storage';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { ServiceWorkerModule } from '@angular/service-worker';
+
+import { AngularFireModule } from 'angularfire2';
 import { environment } from '../environments/environment';
+import { AngularFirestoreModule } from 'angularfire2/firestore';
 
 @NgModule({
   imports: [
@@ -21,7 +24,9 @@ import { environment } from '../environments/environment';
     IonicStorageModule.forRoot(),
     ServiceWorkerModule.register('ngsw-worker.js', {
       enabled: environment.production
-    })
+    }),
+    AngularFireModule.initializeApp(environment.firebase),
+    AngularFirestoreModule,
   ],
   declarations: [AppComponent],
   providers: [InAppBrowser, SplashScreen, StatusBar],

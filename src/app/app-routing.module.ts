@@ -32,7 +32,9 @@ const routes: Routes = [
     path: 'tutorial',
     loadChildren: () => import('./pages/tutorial/tutorial.module').then(m => m.TutorialModule),
     canLoad: [CheckTutorial]
-  }
+  },
+  { path: 'todo-details', loadChildren: './pages/todo-details/todo-details.module#TodoDetailsPageModule' },
+  { path: 'home', loadChildren: './pages/home/home.module#HomePageModule' },
 ];
 
 @NgModule({
