@@ -10,10 +10,16 @@
 <ion-content padding>
   <ion-list lines="full">
     <ion-item>
-      <ion-input required type="text" placeholder="Task" [(ngModel)]="todo.task"></ion-input>
+      <ion-input autofocus required type="text" placeholder="Book" maxlength=100 [(ngModel)]="todo.task"></ion-input>
+    </ion-item>
+    <!-- <ion-item>
+      <ion-input required type="number" placeholder="Priority" [(ngModel)]="todo.priority"></ion-input>
+    </ion-item> -->
+    <ion-item>
+      <ion-input required type="text" placeholder="Author" maxlength=100 [(ngModel)]="todo.author"></ion-input>
     </ion-item>
     <ion-item>
-      <ion-input required type="number" placeholder="Priority" [(ngModel)]="todo.priority"></ion-input>
+      <ion-textarea required placeholder="Enter a short description" minlength=20 maxlength=255 [(ngModel)]="todo.description"></ion-textarea>
     </ion-item>
   </ion-list>
   <ion-button expand="full" (click)="saveTodo()">Save</ion-button>
