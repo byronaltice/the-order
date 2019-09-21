@@ -7,14 +7,15 @@
 </ion-header>
 <ion-content>
   <ion-list>
-    <ng-container *ngIf="!todos || todos.length == 0">
+    <ion-reorder-group (ionItemReorder)="onRenderItems($event)" disabled="false">
+    <!-- <ng-container *ngIf="!todos || todos.length == 0">
       <div *ngFor="let n of [0,1,2]" padding>
         <ion-skeleton-text></ion-skeleton-text>
         <p>
           <ion-skeleton-text class="fake-skeleton"></ion-skeleton-text>
         </p>
       </div>
-    </ng-container>
+    </ng-container> -->
     <ion-item-sliding *ngFor="let item of todos">
       <ion-item lines="inset" button [routerLink]="['/todo-details', item.id]">
         <ion-label>
@@ -22,7 +23,9 @@
           <!-- <p>{{ item.createdAt | date:'short' }}</p> -->
         </ion-label>
         <!-- <ion-note slot="end" color="primary">{{ item.priority }}</ion-note> -->
-      </ion-item>
+      
+        <ion-reorder></ion-reorder>
+        </ion-item>
       <ion-item-options side="end">
         <ion-item-option (click)="vote(item)" color="secondary">
           Check
@@ -30,6 +33,8 @@
         </ion-item-option>
       </ion-item-options>
     </ion-item-sliding>
+    
+  </ion-reorder-group>
   </ion-list>
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button routerLink="/todo-details" routerDirection="forward">

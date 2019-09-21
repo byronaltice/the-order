@@ -2,6 +2,7 @@ import { Todo, TodoService } from './../../services/todo.service';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NavController, LoadingController } from '@ionic/angular';
+import { UserData } from '../../providers/user-data';
  
 @Component({
   selector: 'app-todo-details',
@@ -11,20 +12,27 @@ import { NavController, LoadingController } from '@ionic/angular';
 export class TodoDetailsPage implements OnInit {
  
   todo: Todo = {
-    task: 'test',
+    task: '',
     createdAt: new Date().getTime(),
-    priority: 2
+    priority: 2,
+    user:  '',
   };
+  userName: string;
  
   todoId = null;
  
-  constructor(private route: ActivatedRoute, private nav: NavController, private todoService: TodoService, private loadingController: LoadingController) { }
+  constructor(private userData: UserData, private route: ActivatedRoute, private nav: NavController, private todoService: TodoService, private loadingController: LoadingController) { }
  
   ngOnInit() {
     this.todoId = this.route.snapshot.params['id'];
     if (this.todoId)  {
       this.loadTodo();
     }
+  }
+  ionViewWillEnter() {
+    this.userData.getUsername().then(userName => {
+      this.todo.user = userName;
+    })
   }
  
   async loadTodo() {
@@ -52,7 +60,7 @@ export class TodoDetailsPage implements OnInit {
         //this.nav.back('home');
       });
     } else {
-      this.todoService.addTodo(this.todo).then(() => {
+      this.todoService.addTodo(this.todo, this.userName).then(() => {
         loading.dismiss();
         //this.nav.back('home');
       });
