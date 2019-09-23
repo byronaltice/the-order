@@ -4,6 +4,7 @@ import { AlertController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { UserData } from '../../providers/user-data';
 import { THIS_EXPR } from '@angular/compiler/src/output/output_ast';
+import undefined = require('firebase/empty-import');
 
 @Component({
   selector: 'app-home',
@@ -29,15 +30,11 @@ export class HomePage implements OnInit {
     this.todos.splice(event.detail.to,0,draggedItem);
     //this.listItems = reorderArray(this.listItems, event.detail.from, event.detail.to);
     event.detail.complete();
+    const bookIdToRank = [{bookId: undefined, rank: 0}];
     this.todos.forEach((book, rank) => {
-      book.rank = rank + 1;
-      this.userRatings
-        .filter(rating => rating.userName === this.userName)
-        .map(rating => rating.ratings
-          .filter(ratedBook => ratedBook.bookId === book.id)
-          //mark this book with it's new rating
-          )
-    })
+      bookIdToRank[rank] = {bookId: book.id, rank};
+    });
+    const updatedUserRatingsForUser: UserRatings = { userName: this.userName, ratings: bookIdToRank };
   }
   ngOnInit() {
     

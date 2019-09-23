@@ -68,6 +68,7 @@ export class TodoService {
  
   addTodo(todo: Todo) {
     return this.todosCollection.add(todo);
+    
   }
  
   removeTodo(id) {
