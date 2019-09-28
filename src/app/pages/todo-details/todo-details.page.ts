@@ -23,6 +23,9 @@ export class TodoDetailsPage implements OnInit {
  
   constructor(private userData: UserData, private route: ActivatedRoute, private nav: NavController, private todoService: TodoService, private loadingController: LoadingController) { }
  
+  /**
+   * test commit
+   */
   ngOnInit() {
     this.todoId = this.route.snapshot.params['id'];
     if (this.todoId)  {
