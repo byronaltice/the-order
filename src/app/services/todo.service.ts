@@ -10,14 +10,14 @@ export interface Todo {
   priority: number;
   createdAt: number;
   user: string;
-  rank: number;
 }
 export interface Rating {
   bookId: string;
   bookName: string;
-  rank: number;
+  rank?: number;
 }
 export interface UserRatings {
+  id?: string;
   userName: string;
   ratings: Rating[];
 }
@@ -48,8 +48,8 @@ export class TodoService {
       map(actions => {
         return actions.map(a => {
           const data = a.payload.doc.data();
-          const userName = a.payload.doc.id;
-          return { userName, ...data };
+          const id = a.payload.doc.id;
+          return { id, ...data };
         })
       })
     )
@@ -69,7 +69,6 @@ export class TodoService {
  
   addTodo(todo: Todo, userName: String) {
     return this.todosCollection.add(todo);
-    
   }
  
   removeTodo(id) {
@@ -80,9 +79,11 @@ export class TodoService {
     return this.ratings;
   }
   updateRatings(userRatings: UserRatings) {
-    return this.userRatingsCollection.doc(userRatings.userName).update(userRatings)
+    userRatings.userName = userRatings.userName.toLowerCase();
+    return this.userRatingsCollection.doc(userRatings.id).update(userRatings)
   }
   addRatings(userRatings: UserRatings) {
+    userRatings.userName = userRatings.userName.toLowerCase();
     return this.userRatingsCollection.add(userRatings);
   }
 }

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Todo, TodoService, UserRatings } from '../../services/todo.service';
+import { Todo, TodoService, UserRatings as UserInfo } from '../../services/todo.service';
 import { AlertController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { UserData } from '../../providers/user-data';
@@ -14,7 +14,7 @@ export class HomePage implements OnInit {
 
   todos: Todo[];
   userName: string;
-  userRatings: UserRatings[];
+  allUsers: UserInfo[];
 
   constructor(
     private todoService: TodoService,
@@ -25,19 +25,25 @@ export class HomePage implements OnInit {
 
   onRenderItems(event) {
     let draggedItem = this.todos.splice(event.detail.from, 1)[0];
+    const ratingsOfCurrentUser = this.allUsers.find(rating => rating.userName === this.userName);
     this.todos.splice(event.detail.to, 0, draggedItem);
     event.detail.complete();
-    const bookIdToRank = [{ bookId: '', rank: 0, bookName: '' }];
+    const newRankingsForThisUser = [{ bookId: '', rank: 0, bookName: '' }];
     this.todos.forEach((book, rank) => {
-      bookIdToRank[rank] = { bookId: book.id, rank, bookName: book.task };
+      newRankingsForThisUser[rank] = { bookId: book.id, rank, bookName: book.task };
     });
-    const updatedUserRatingsForUser: UserRatings = { 
+    const userInfo: UserInfo = {
       userName: this.userName, 
-      ratings: bookIdToRank, 
+      ratings: newRankingsForThisUser, 
     };
-    this.userRatings.find(rating => rating.userName === this.userName) ?
-        this.todoService.updateRatings(updatedUserRatingsForUser) :
-        this.todoService.addRatings(updatedUserRatingsForUser);
+    // Because if you provide an id to a new thing, it will bug out.
+    if(ratingsOfCurrentUser) {
+      userInfo.id = ratingsOfCurrentUser.id;
+      this.todoService.updateRatings(userInfo)
+    } else {
+      this.todoService.addRatings(userInfo);
+
+    }
   }
   ngOnInit() {
 
@@ -54,7 +60,7 @@ export class HomePage implements OnInit {
       this.todos = res;
     });
     this.todoService.getRatings().subscribe(ratings => {
-      this.userRatings = ratings;
+      this.allUsers = ratings;
     });
   }
   async presentAlert() {
