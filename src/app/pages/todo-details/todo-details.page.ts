@@ -16,6 +16,7 @@ export class TodoDetailsPage implements OnInit {
     createdAt: new Date().getTime(),
     priority: 2,
     user:  '',
+    rank: undefined,
   };
   userName: string;
  

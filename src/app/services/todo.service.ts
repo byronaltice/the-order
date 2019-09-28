@@ -14,10 +14,11 @@ export interface Todo {
 }
 export interface Rating {
   bookId: string;
+  bookName: string;
   rank: number;
 }
 export interface UserRatings {
-  userName?: string;
+  userName: string;
   ratings: Rating[];
 }
 @Injectable({
@@ -66,7 +67,7 @@ export class TodoService {
     return this.todosCollection.doc(id).update(todo);
   }
  
-  addTodo(todo: Todo) {
+  addTodo(todo: Todo, userName: String) {
     return this.todosCollection.add(todo);
     
   }
@@ -78,10 +79,10 @@ export class TodoService {
   getRatings() {
     return this.ratings;
   }
-  updateRatings(userName: string, userRatings: UserRatings) {
-    return this.userRatingsCollection.doc(userName).update(userRatings)
+  updateRatings(userRatings: UserRatings) {
+    return this.userRatingsCollection.doc(userRatings.userName).update(userRatings)
   }
-  addRatings(userName: string, userRatings: UserRatings) {
+  addRatings(userRatings: UserRatings) {
     return this.userRatingsCollection.add(userRatings);
   }
 }
