@@ -47,6 +47,7 @@ export class OpaVoteService {
             ratings.sort((a, b) => a.rank - b.rank)
             .reduce((previousValue, currentValue) => {
               const opaId = mapBookIdsToOpaVoteIds[currentValue.bookId];
+              if(opaId === undefined) { return previousValue };
               return previousValue + ` ${opaId}`;
             }, '1')
           ).join(' 0\n') + ' 0\n'

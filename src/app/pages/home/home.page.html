@@ -47,12 +47,10 @@
       <ion-icon name="done-all"></ion-icon>
     </ion-fab-button>
   </ion-fab>
-  <ion-button *ngIf="!isOpaVotePollOpen">
-    See Results
-  </ion-button>
+  <ion-item *ngIf="!isOpaVotePollOpen">
+    RESULTS: {{opaVotePollWinner}}
+  </ion-item>
   <ion-button (click)="reopenPoll()" *ngIf="!isOpaVotePollOpen">
     Reopen
   </ion-button>
-  <ion-item>
-  </ion-item>
 </ion-content>

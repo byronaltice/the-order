@@ -15,6 +15,7 @@ export interface Todo {
 export interface PollStatus {
   id?: string;
   status: boolean;
+  winner: string;
 }
 export interface Rating {
   bookId: string;

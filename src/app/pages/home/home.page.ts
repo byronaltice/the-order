@@ -35,6 +35,7 @@ export class HomePage implements OnInit {
     }, 
     winners: [string]
   };
+  opaVotePollWinner: string;
 
   constructor(
     private todoService: TodoService,
@@ -125,6 +126,7 @@ export class HomePage implements OnInit {
         this.isOpaVotePollOpen = pollStatuses[0] && pollStatuses[0].status;
         this.isOpaVotePollOpen = this.isOpaVotePollOpen === undefined ? this.isOpaVotePollOpen = true : this.isOpaVotePollOpen;
         this.opaVotePollId = (pollStatuses[0] && pollStatuses[0].id) || '';
+        this.opaVotePollWinner = pollStatuses[0].winner;
       })
       
     }), 500)
@@ -185,8 +187,9 @@ export class HomePage implements OnInit {
         winners: [string]
       }) => {
         this.opaVotePollResponse = response;
+        this.todoService.updateOpaVotePollStatus({winner: response.winners[0], status: false, id: this.opaVotePollId}, this.opaVotePollId);
+        
       });
-    this.todoService.updateOpaVotePollStatus({status: false, id: this.opaVotePollId}, this.opaVotePollId);
   }
   getItems() {
     this.opaVoteService.getItems();

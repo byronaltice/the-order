@@ -23,5 +23,8 @@
     </ion-item>
   </ion-list>
   <ion-button expand="full" (click)="saveTodo()">Save</ion-button>
-  <ion-item>{{todo.description}}</ion-item>
+  <ion-item>
+    This is a copy of the description because some phones have trouble displaying the text field.<br/>
+    {{todo.description}}
+  </ion-item>
 </ion-content>
