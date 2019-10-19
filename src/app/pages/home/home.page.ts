@@ -198,7 +198,7 @@ export class HomePage implements OnInit {
     this.isAdmin = isAdmin;
   }
   reopenPoll() {
-    this.todoService.updateOpaVotePollStatus({status: true, id: this.opaVotePollId}, this.opaVotePollId);
+    this.todoService.updateOpaVotePollStatus({ winner: 'TBD', status: true, id: this.opaVotePollId}, this.opaVotePollId);
   }  
   doRefresh(event) {
     console.log('Begin async operation');
