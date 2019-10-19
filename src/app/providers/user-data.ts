@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
-import { Events } from '@ionic/angular';
+import { Events, AlertController } from '@ionic/angular';
 import { Storage } from '@ionic/storage';
+import { ValueAccessor } from '@ionic/angular/dist/directives/control-value-accessors/value-accessor';
+import { TodoService } from '../services/todo.service';
+import { Router } from '@angular/router';
 
 
 @Injectable({
@@ -13,7 +16,10 @@ export class UserData {
 
   constructor(
     public events: Events,
-    public storage: Storage
+    public storage: Storage,
+    public todoService: TodoService,
+    private alertController: AlertController,
+    private router: Router,
   ) { }
 
   hasFavorite(sessionName: string): boolean {
@@ -31,13 +37,38 @@ export class UserData {
     }
   }
 
-  login(username: string): Promise<any> {
+  login(username: string, admin: boolean, password: string): Promise<any> {
     return this.storage.set(this.HAS_LOGGED_IN, true).then(() => {
       this.setUsername(username);
-      return this.events.publish('user:login');
+      this.todoService.getRatings().subscribe(ratings => {
+        const user = ratings.find(rating => rating.userName === username);
+        if (!user || user.password === password) {
+          this.setUsername(username);
+          this.setAdmin(admin);
+          this.setPassword(password);
+          return this.events.publish('user:login');
+        } else {
+          this.presentAlert();
+        }
+      })
     });
   }
-
+  async presentAlert() {
+    const alert = await this.alertController.create({
+      header: 'Uh Oh',
+      message: 'Your password isn\'t right',
+      backdropDismiss: false,
+      buttons: [{
+        text: 'Go To Log In Page',
+        role: 'Confirm',
+        cssClass: 'primary',
+        handler: () => {
+          this.router.navigateByUrl('/login');
+        },
+      }],
+    });
+    await alert.present();
+  }
   signup(username: string): Promise<any> {
     return this.storage.set(this.HAS_LOGGED_IN, true).then(() => {
       this.setUsername(username);
@@ -59,6 +90,26 @@ export class UserData {
 
   getUsername(): Promise<string> {
     return this.storage.get('username').then((value) => {
+      return value;
+    });
+  }
+
+  setAdmin(admin: boolean): Promise<any> {
+    return this.storage.set('isAdmin', admin);
+  }
+
+  isAdmin(): Promise<boolean> {
+    return this.storage.get('isAdmin').then(value => {
+      return value;
+    });
+  }
+  
+  setPassword(password: string): Promise<any> {
+    return this.storage.set('password', password);
+  }
+
+  getPassword(): Promise<string> {
+    return this.storage.get('password').then(value => {
       return value;
     });
   }

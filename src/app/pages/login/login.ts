@@ -24,10 +24,12 @@ export class LoginPage {
 
   onLogin(form: NgForm) {
     this.submitted = true;
-
     if (form.valid) {
-      this.userData.login(this.login.username);
-      this.router.navigateByUrl('/home');
+      this.userData.login(
+        this.login.username, 
+        this.login.username.toLowerCase() === 'byron' && this.login.password === 'admin1234', 
+        this.login.password)
+      .then(() => this.router.navigateByUrl('/home'));
     }
   }
 

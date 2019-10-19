@@ -3,6 +3,7 @@ import { AngularFirestore, AngularFirestoreCollection } from 'angularfire2/fires
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { User } from 'firebase';
+import { HttpClient } from '@angular/common/http';
 
 export interface Todo {
   id?: string;
@@ -10,6 +11,10 @@ export interface Todo {
   priority: number;
   createdAt: number;
   user: string;
+}
+export interface PollStatus {
+  id?: string;
+  status: boolean;
 }
 export interface Rating {
   bookId: string;
@@ -19,6 +24,7 @@ export interface Rating {
 export interface UserRatings {
   id?: string;
   userName: string;
+  password: string;
   ratings: Rating[];
 }
 @Injectable({
@@ -27,12 +33,13 @@ export interface UserRatings {
 export class TodoService {
   private todosCollection: AngularFirestoreCollection<Todo>;
   private userRatingsCollection: AngularFirestoreCollection<UserRatings>;
- 
-  private todos: Observable<Todo[]>;
+  private opaVotePollStatusCollection: AngularFirestoreCollection<PollStatus>;
 
+  private todos: Observable<Todo[]>;
+  private opaVotePollStatus: Observable<PollStatus[]>;
   private ratings: Observable<UserRatings[]>;
  
-  constructor(db: AngularFirestore) {
+  constructor(db: AngularFirestore, public httpClient: HttpClient) {
     this.todosCollection = db.collection<Todo>('todos');
     this.todos = this.todosCollection.snapshotChanges().pipe(
       map(actions => {
@@ -43,7 +50,7 @@ export class TodoService {
         });
       })
     );
-    this.userRatingsCollection = db.collection<UserRatings>('userRatings');
+    this.userRatingsCollection = db .collection<UserRatings>('userRatings');
     this.ratings = this.userRatingsCollection.snapshotChanges().pipe(
       map(actions => {
         return actions.map(a => {
@@ -53,8 +60,27 @@ export class TodoService {
         })
       })
     )
+    this.opaVotePollStatusCollection = db.collection<PollStatus>('pollStatus');
+    this.opaVotePollStatus = this.opaVotePollStatusCollection.snapshotChanges().pipe(
+      map(actions => {
+        return actions.map(a => {
+          const data = a.payload.doc.data();
+          const id = a.payload.doc.id;
+          return { id, ...data };
+        });
+      })
+    )
   }
  
+  getOpaVotePollStatuses() {
+    return this.opaVotePollStatus;
+  }
+  getOpaVotePollStatus(id) {
+    return this.opaVotePollStatusCollection.doc<PollStatus>(id).valueChanges();
+  }
+  updateOpaVotePollStatus(opaVotePollStatus: PollStatus, id: string) {
+    return this.opaVotePollStatusCollection.doc(id).update(opaVotePollStatus);
+  }
   getTodos() {
     return this.todos;
   }

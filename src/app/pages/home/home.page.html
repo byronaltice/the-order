@@ -37,8 +37,14 @@
   </ion-reorder-group>
   </ion-list>
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button routerLink="/todo-details" routerDirection="forward">
+    <ion-fab-button *ngIf="isOpaVotePollOpen" routerLink="/todo-details" routerDirection="forward">
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>
+    <ion-fab-button *ngIf="isAdmin && isOpaVotePollOpen" (click)="submitVotes()">
+      <ion-icon name="done-all"></ion-icon>
+    </ion-fab-button>
   </ion-fab>
+  <ion-button *ngIf="!isOpaVotePollOpen">
+    See Results
+  </ion-button>
 </ion-content>
