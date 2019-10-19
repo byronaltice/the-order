@@ -34,8 +34,7 @@ export class OpaVoteService {
       previousValue[currentValue.bookId] = currentValue.opaVoteId;
       return previousValue;
     }, {});
-    debugger;
-    this.httpClient
+    return this.httpClient
     .post(
       `${this.corsProxyUrl}/${this.opaVoteBaseUrl}/${this.opaVoteCountsEndpoint}`,
         { 'method': 'Borda Count', 'blt': 
@@ -62,10 +61,6 @@ export class OpaVoteService {
           // "Title"
           + '\"Book Vote for December\"' },
         this.httpOptions)
-        
-    .subscribe((response) => {
-      console.log(response);
-    });
   }
   getItems() {
     this.httpClient

@@ -1,11 +1,14 @@
 <ion-header>
   <ion-toolbar color="primary">
     <ion-title>
-      Books to vote on for September
+      Books to Vote On
     </ion-title>
   </ion-toolbar>
 </ion-header>
 <ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
   <ion-list>
     <ion-reorder-group (ionItemReorder)="onRenderItems($event)" disabled="false">
     <!-- <ng-container *ngIf="!todos || todos.length == 0">
@@ -27,7 +30,7 @@
         <ion-reorder></ion-reorder>
         </ion-item>
       <ion-item-options side="end">
-        <ion-item-option (click)="vote(item)" color="secondary">
+        <ion-item-option *ngIf="isAdmin" (click)="vote(item)" color="secondary">
           Check
           <ion-icon name="checkmark" slot="end"></ion-icon>
         </ion-item-option>
@@ -47,4 +50,9 @@
   <ion-button *ngIf="!isOpaVotePollOpen">
     See Results
   </ion-button>
+  <ion-button (click)="reopenPoll()" *ngIf="!isOpaVotePollOpen">
+    Reopen
+  </ion-button>
+  <ion-item>
+  </ion-item>
 </ion-content>

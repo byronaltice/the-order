@@ -60,12 +60,12 @@ export class TodoDetailsPage implements OnInit {
     if (this.todoId) {
       this.todoService.updateTodo(this.todo, this.todoId).then(() => {
         loading.dismiss();
-        //this.nav.back('home');
+        this.nav.navigateForward('home');
       });
     } else {
       this.todoService.addTodo(this.todo, this.userName).then(() => {
         loading.dismiss();
-        //this.nav.back('home');
+        this.nav.navigateForward('home');
       });
     }
   }

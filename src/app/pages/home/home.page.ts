@@ -19,6 +19,22 @@ export class HomePage implements OnInit {
   isAdmin: boolean = false;
   isOpaVotePollOpen: boolean = false;
   opaVotePollId: string;
+  opaVotePollResponse: {
+    candidates: [], 
+    method: string, 
+    n_votes: number, 
+    title: string, 
+    results: {
+      count: [], 
+      n_seats: number, 
+      n_votes: number, 
+      title: string, 
+      method: string, 
+      msg: string, 
+      winners: [number]
+    }, 
+    winners: [string]
+  };
 
   constructor(
     private todoService: TodoService,
@@ -54,7 +70,7 @@ export class HomePage implements OnInit {
 
   }
   getRatingsOfCurrentUser() {
-    return this.allUsers.find(rating => rating.userName === this.getUserName());
+    return this.allUsers && this.allUsers.find(rating => rating.userName === this.getUserName());
   }
   setUserName(userName: string) {
     this.userName = userName.toLowerCase();
@@ -90,7 +106,7 @@ export class HomePage implements OnInit {
         this.todoService.getTodos().subscribe(bookList => {
           this.todos = bookList; 
           this.todos.forEach(book => {
-            if(!this.getRatingsOfCurrentUser().ratings
+            if(this.getRatingsOfCurrentUser() && !this.getRatingsOfCurrentUser().ratings
             .find((ratedBook) => book.id === ratedBook.bookId) ) {
               this.getRatingsOfCurrentUser().ratings.push({
                 bookId: book.id,
@@ -107,7 +123,7 @@ export class HomePage implements OnInit {
       });
       this.todoService.getOpaVotePollStatuses().subscribe(pollStatuses => {
         this.isOpaVotePollOpen = pollStatuses[0] && pollStatuses[0].status;
-        this.isOpaVotePollOpen === undefined ? this.isOpaVotePollOpen = true : this.isOpaVotePollOpen = false;
+        this.isOpaVotePollOpen = this.isOpaVotePollOpen === undefined ? this.isOpaVotePollOpen = true : this.isOpaVotePollOpen;
         this.opaVotePollId = (pollStatuses[0] && pollStatuses[0].id) || '';
       })
       
@@ -150,7 +166,26 @@ export class HomePage implements OnInit {
     this.todoService.removeTodo(item.id);
   }
   submitVotes() {
-    this.opaVoteService.submitVotes(this.todos, this.allUsers);
+    this.opaVoteService.submitVotes(this.todos, this.allUsers)
+    .subscribe(
+      (response: {
+        candidates: [], 
+        method: string, 
+        n_votes: number, 
+        title: string, 
+        results: {
+          count: [], 
+          n_seats: number, 
+          n_votes: number, 
+          title: string, 
+          method: string, 
+          msg: string, 
+          winners: [number]
+        }, 
+        winners: [string]
+      }) => {
+        this.opaVotePollResponse = response;
+      });
     this.todoService.updateOpaVotePollStatus({status: false, id: this.opaVotePollId}, this.opaVotePollId);
   }
   getItems() {
@@ -158,5 +193,18 @@ export class HomePage implements OnInit {
   }
   setAdmin(isAdmin: boolean) {
     this.isAdmin = isAdmin;
+  }
+  reopenPoll() {
+    this.todoService.updateOpaVotePollStatus({status: true, id: this.opaVotePollId}, this.opaVotePollId);
+  }  
+  doRefresh(event) {
+    console.log('Begin async operation');
+
+    setTimeout(() => {
+      location.reload();
+      window.location.reload();
+      console.log('Async operation has ended');
+      event.target.complete();
+    }, 2000);
   }
 }

@@ -9,7 +9,10 @@
     "start": "ng serve",
     "build": "ng build",
     "test": "ng test --watch=false",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "ionic:build": "ionic-app-scripts build",
+    "ionic:serve": "ionic-app-scripts serve",
+    "ionic:deploy": "npm run build && firebase deploy;"
   },
   "repository": {
     "type": "git",
