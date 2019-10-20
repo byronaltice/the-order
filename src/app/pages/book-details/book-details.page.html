@@ -1,0 +1,32 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Details</ion-title>
+  </ion-toolbar>
+</ion-header>
+ 
+<ion-content padding>
+  <form #bookForm="ngForm">
+    <ion-list lines="full">
+      <ion-item>
+        <ion-input name="title" autofocus required type="text" placeholder="Book" maxlength=100 [(ngModel)]="book.task"></ion-input>
+      </ion-item>
+      <!-- <ion-item>
+        <ion-input required type="number" placeholder="Priority" [(ngModel)]="book.priority"></ion-input>
+      </ion-item> -->
+      <ion-item>
+        <ion-input name="author" #author="ngModel" required type="text" placeholder="Author" maxlength=100 [(ngModel)]="book.author"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-textarea name="description" autoGrow=true required placeholder="Enter a short description" minlength=20 maxlength=255 [(ngModel)]="book.description"></ion-textarea>
+      </ion-item>
+    </ion-list>
+    <ion-button expand="full" (click)="saveBook()">Save</ion-button>
+    <ion-item>
+      This is a copy of the description because some phones have trouble displaying the text field.<br/>
+      {{book.description}}
+    </ion-item>
+  </form>
+</ion-content>

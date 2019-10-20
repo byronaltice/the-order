@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Todo, UserRatings } from './todo.service';
+import { Book, UserRatings } from './book.service';
 import { prepareEventListenerParameters } from '@angular/compiler/src/render3/view/template';
 import { map } from 'rxjs/operators';
 import { stringify } from '@angular/compiler/src/util';
@@ -24,10 +24,10 @@ export class OpaVoteService {
   constructor(public httpClient: HttpClient) {
     
   }
-  submitVotes(todos: Todo[], userRatings: UserRatings[]) {
-    const mapBookIdsToOpaVoteIds = todos
-    .map((todo, index) => ({
-      bookId: todo.id, 
+  submitVotes(books: Book[], userRatings: UserRatings[]) {
+    const mapBookIdsToOpaVoteIds = books
+    .map((book, index) => ({
+      bookId: book.id, 
       opaVoteId: '' + (index + 1)
     }))
     .reduce((previousValue, currentValue) => {
@@ -39,7 +39,7 @@ export class OpaVoteService {
       `${this.corsProxyUrl}/${this.opaVoteBaseUrl}/${this.opaVoteCountsEndpoint}`,
         { 'method': 'Borda Count', 'blt': 
           // 4 2
-          `${todos.length} 1\n`
+          `${books.length} 1\n`
           // 1 4 1 3 2 0
           + userRatings
           .map(userRating => userRating.ratings)
@@ -55,7 +55,7 @@ export class OpaVoteService {
           + '0\n'
           // "Candidate 1"
           + '\"'
-          + todos.map(todo => todo.task)
+          + books.map(book => book.task)
           .reduce((previousValue, currentValue) => {
             return previousValue + '\"' + '\n\"' + currentValue;
           }) + '\"' + '\n'
@@ -72,7 +72,7 @@ export class OpaVoteService {
       console.log(response);
     });
   }
-  sanityCheck(todos: Todo[]) {
+  sanityCheck(books: Book[]) {
     this.httpClient
     //.get('https://www.opavote.com/api/v1/me')
     .get(`${this.corsProxyUrl}/${this.opaVoteBaseUrl}/${this.opaVoteSanityEndpoint}`, this.httpOptions)

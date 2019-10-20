@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Events, AlertController } from '@ionic/angular';
 import { Storage } from '@ionic/storage';
 import { ValueAccessor } from '@ionic/angular/dist/directives/control-value-accessors/value-accessor';
-import { TodoService } from '../services/todo.service';
+import { BookService } from '../services/book.service';
 import { Router } from '@angular/router';
 
 
@@ -17,7 +17,7 @@ export class UserData {
   constructor(
     public events: Events,
     public storage: Storage,
-    public todoService: TodoService,
+    public bookService: BookService,
     private alertController: AlertController,
     private router: Router,
   ) { }
@@ -40,7 +40,7 @@ export class UserData {
   login(username: string, admin: boolean, password: string): Promise<any> {
     return this.storage.set(this.HAS_LOGGED_IN, true).then(() => {
       this.setUsername(username);
-      this.todoService.getRatings().subscribe(ratings => {
+      this.bookService.getRatings().subscribe(ratings => {
         const user = ratings.find(rating => rating.userName === username);
         if (!user || user.password === password || user.userName + '123' === password) {
           this.setUsername(username);

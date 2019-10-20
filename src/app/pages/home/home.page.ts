@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Todo, TodoService, UserRatings as UserInfo } from '../../services/todo.service';
+import { Book, BookService, UserRatings as UserInfo } from '../../services/book.service';
 import { AlertController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { UserData } from '../../providers/user-data';
@@ -12,12 +12,12 @@ import { OpaVoteService } from '../../services/opa-vote.service';
 })
 export class HomePage implements OnInit {
 
-  todos: Todo[];
+  books: Book[];
   userName: string;
   password: string;
   allUsers: UserInfo[];
   isAdmin: boolean = false;
-  isOpaVotePollOpen: boolean = false;
+  isOpaVotePollOpen: boolean = true;
   opaVotePollId: string;
   opaVotePollResponse: {
     candidates: [], 
@@ -38,7 +38,7 @@ export class HomePage implements OnInit {
   opaVotePollWinner: string;
 
   constructor(
-    private todoService: TodoService,
+    private bookService: BookService,
     private userData: UserData,
     private alertController: AlertController,
     private router: Router,
@@ -46,12 +46,12 @@ export class HomePage implements OnInit {
   ) { }
 
   onRenderItems(event) {
-    let draggedItem = this.todos.splice(event.detail.from, 1)[0];
+    let draggedItem = this.books.splice(event.detail.from, 1)[0];
     const ratingsOfCurrentUser = this.getRatingsOfCurrentUser();
-    this.todos.splice(event.detail.to, 0, draggedItem);
+    this.books.splice(event.detail.to, 0, draggedItem);
     event.detail.complete();
     const newRankingsForThisUser = [{ bookId: '', rank: 0, bookName: '' }];
-    this.todos.forEach((book, rank) => {
+    this.books.forEach((book, rank) => {
       newRankingsForThisUser[rank] = { bookId: book.id, rank, bookName: book.task };
     });
     const userInfo: UserInfo = {
@@ -62,13 +62,12 @@ export class HomePage implements OnInit {
     // Because if you provide an id to a new thing, it will bug out.
     if(ratingsOfCurrentUser) {
       userInfo.id = ratingsOfCurrentUser.id;
-      this.todoService.updateRatings(userInfo)
+      this.bookService.updateRatings(userInfo)
     } else {
-      this.todoService.addRatings(userInfo);
+      this.bookService.addRatings(userInfo);
     }
   }
   ngOnInit() {
-
   }
   getRatingsOfCurrentUser() {
     return this.allUsers && this.allUsers.find(rating => rating.userName === this.getUserName());
@@ -95,20 +94,21 @@ export class HomePage implements OnInit {
         this.setUserName(userName);
         this.setPassword(password);
         let alreadyLoaded = false;
-        this.todoService.getRatings().subscribe(ratings => {
+        this.bookService.getRatings().subscribe(ratings => {
           this.allUsers = ratings;
           this.userData.isAdmin().then(isAdmin => {
             this.setAdmin(isAdmin);
           })
           if(!alreadyLoaded) {
-            this.todos = this.sortCurrentUsersBooksByRating();
+            this.books = this.sortCurrentUsersBooksByRating();
           }
         });
-        this.todoService.getTodos().subscribe(bookList => {
-          this.todos = bookList; 
-          this.todos.forEach(book => {
-            if(this.getRatingsOfCurrentUser() && !this.getRatingsOfCurrentUser().ratings
-            .find((ratedBook) => book.id === ratedBook.bookId) ) {
+        this.bookService.getBooks().subscribe(bookList => {
+          this.books = bookList; 
+          this.books.forEach(book => {
+            if(this.getRatingsOfCurrentUser() && 
+              !this.getRatingsOfCurrentUser().ratings
+              .find((ratedBook) => book.id === ratedBook.bookId) ) {
               this.getRatingsOfCurrentUser().ratings.push({
                 bookId: book.id,
                 bookName: book.task,
@@ -117,30 +117,29 @@ export class HomePage implements OnInit {
             }
           })
           if(!alreadyLoaded) {
-            this.todos = this.sortCurrentUsersBooksByRating();
+            this.books = this.sortCurrentUsersBooksByRating();
             alreadyLoaded = true;
           }
         });
       });
-      this.todoService.getOpaVotePollStatuses().subscribe(pollStatuses => {
+      this.bookService.getOpaVotePollStatuses().subscribe(pollStatuses => {
         this.isOpaVotePollOpen = pollStatuses[0] && pollStatuses[0].status;
         this.isOpaVotePollOpen = this.isOpaVotePollOpen === undefined ? this.isOpaVotePollOpen = true : this.isOpaVotePollOpen;
         this.opaVotePollId = (pollStatuses[0] && pollStatuses[0].id) || '';
         this.opaVotePollWinner = pollStatuses[0].winner;
       })
-      
     }), 500)
   }
   sortCurrentUsersBooksByRating() {
-    if (!this.allUsers || !this.todos) {
-      return this.todos;
+    if (!this.allUsers || !this.books) {
+      return this.books;
     }
     const currentUsersInfo = this.allUsers
     .find( userRating => userRating.userName === this.getUserName());
     if (!currentUsersInfo) {
-      return this.todos;
+      return this.books;
     }
-    return this.todos.sort((currentBook, nextBook) => 
+    return this.books.sort((currentBook, nextBook) => 
       currentUsersInfo.ratings.find(a => a.bookId === currentBook.id).rank 
       - currentUsersInfo.ratings.find(a => a.bookId === nextBook.id).rank);
   }
@@ -162,13 +161,13 @@ export class HomePage implements OnInit {
   }
   vote(item) {
     this.remove(item);
-    this.todos = this.todos.filter(todo => todo.id !== item);
+    this.books = this.books.filter(book => book.id !== item);
   }
   remove(item) {
-    this.todoService.removeTodo(item.id);
+    this.bookService.removeBook(item.id);
   }
   submitVotes() {
-    this.opaVoteService.submitVotes(this.todos, this.allUsers)
+    this.opaVoteService.submitVotes(this.books, this.allUsers)
     .subscribe(
       (response: {
         candidates: [], 
@@ -187,7 +186,7 @@ export class HomePage implements OnInit {
         winners: [string]
       }) => {
         this.opaVotePollResponse = response;
-        this.todoService.updateOpaVotePollStatus({winner: response.winners[0], status: false, id: this.opaVotePollId}, this.opaVotePollId);
+        this.bookService.updateOpaVotePollStatus({winner: response.winners[0], status: false, id: this.opaVotePollId}, this.opaVotePollId);
         
       });
   }
@@ -198,7 +197,7 @@ export class HomePage implements OnInit {
     this.isAdmin = isAdmin;
   }
   reopenPoll() {
-    this.todoService.updateOpaVotePollStatus({ winner: 'TBD', status: true, id: this.opaVotePollId}, this.opaVotePollId);
+    this.bookService.updateOpaVotePollStatus({ winner: 'TBD', status: true, id: this.opaVotePollId}, this.opaVotePollId);
   }  
   doRefresh(event) {
     console.log('Begin async operation');

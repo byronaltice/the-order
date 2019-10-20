@@ -5,7 +5,9 @@ import { map } from 'rxjs/operators';
 import { User } from 'firebase';
 import { HttpClient } from '@angular/common/http';
 
-export interface Todo {
+export interface Book {
+  description: string;
+  author: string;
   id?: string;
   task: string;
   priority: number;
@@ -31,18 +33,18 @@ export interface UserRatings {
 @Injectable({
   providedIn: 'root'
 })
-export class TodoService {
-  private todosCollection: AngularFirestoreCollection<Todo>;
+export class BookService {
+  private booksCollection: AngularFirestoreCollection<Book>;
   private userRatingsCollection: AngularFirestoreCollection<UserRatings>;
   private opaVotePollStatusCollection: AngularFirestoreCollection<PollStatus>;
 
-  private todos: Observable<Todo[]>;
+  private books: Observable<Book[]>;
   private opaVotePollStatus: Observable<PollStatus[]>;
   private ratings: Observable<UserRatings[]>;
  
   constructor(db: AngularFirestore, public httpClient: HttpClient) {
-    this.todosCollection = db.collection<Todo>('todos');
-    this.todos = this.todosCollection.snapshotChanges().pipe(
+    this.booksCollection = db.collection<Book>('books');
+    this.books = this.booksCollection.snapshotChanges().pipe(
       map(actions => {
         return actions.map(a => {
           const data = a.payload.doc.data();
@@ -82,24 +84,24 @@ export class TodoService {
   updateOpaVotePollStatus(opaVotePollStatus: PollStatus, id: string) {
     return this.opaVotePollStatusCollection.doc(id).update(opaVotePollStatus);
   }
-  getTodos() {
-    return this.todos;
+  getBooks() {
+    return this.books;
   }
  
-  getTodo(id) {
-    return this.todosCollection.doc<Todo>(id).valueChanges();
+  getBook(id) {
+    return this.booksCollection.doc<Book>(id).valueChanges();
   }
  
-  updateTodo(todo: Todo, id: string) {
-    return this.todosCollection.doc(id).update(todo);
+  updateBook(book: Book, id: string) {
+    return this.booksCollection.doc(id).update(book);
   }
  
-  addTodo(todo: Todo, userName: String) {
-    return this.todosCollection.add(todo);
+  addBook(book: Book, userName: String) {
+    return this.booksCollection.add(book);
   }
  
-  removeTodo(id) {
-    return this.todosCollection.doc(id).delete();
+  removeBook(id) {
+    return this.booksCollection.doc(id).delete();
   }
 
   getRatings() {
