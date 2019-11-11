@@ -2,8 +2,9 @@ import { Book, BookService } from '../../services/book.service';
 import { NgForm } from '@angular/forms';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { NavController, LoadingController } from '@ionic/angular';
+import { NavController, LoadingController, ToastController } from '@ionic/angular';
 import { UserData } from '../../providers/user-data';
+import { ToastButton, ToastOptions } from '@ionic/core';
  
 @Component({
   selector: 'app-book-details',
@@ -24,7 +25,12 @@ export class BookDetailsPage implements OnInit {
  
   bookId = null;
  
-  constructor(private userData: UserData, private route: ActivatedRoute, private nav: NavController, private bookService: BookService, private loadingController: LoadingController) { }
+  constructor(private userData: UserData, 
+    private route: ActivatedRoute, 
+    private nav: NavController, 
+    private bookService: BookService, 
+    private loadingController: LoadingController,
+    private toastController: ToastController) { }
  
   /**
    * test commit
@@ -54,25 +60,35 @@ export class BookDetailsPage implements OnInit {
   }
  
   async saveBook(form: NgForm) {
-    if(!form.valid) {
+    if(form && !form.valid) {
       alert('Fix issues');
     }
     const loading = await this.loadingController.create({
       message: 'Saving Book..'
     });
-    await loading.present();
-    
-    if (this.bookId) {
-      this.bookService.updateBook(this.book, this.bookId).then(() => {
-        loading.dismiss();
-        this.nav.navigateForward('home');
-      });
-    } else {
-      this.bookService.addBook(this.book, this.userName).then(() => {
-        loading.dismiss();
-        this.nav.navigateForward('home');
-      });
-    }
+    const toastOptions: ToastOptions = {
+      header: 'Added a new book',
+      position: 'top',
+    };
+    loading.present().then(async () => {
+      if (this.bookId) {
+        toastOptions.header = "Updated";
+        const toast = await this.toastController.create(toastOptions);
+        this.bookService.updateBook(this.book, this.bookId).then(() => {
+          loading.dismiss();
+          this.nav.navigateForward('home');
+          toast.present();
+        });
+      } else {
+        toastOptions.header = "Added";
+        const toast = await this.toastController.create(toastOptions);
+        this.bookService.addBook(this.book, this.userName).then(() => {
+          loading.dismiss();
+          this.nav.navigateForward('home');
+          toast.present();
+        });
+      }
+    });
   }
  
 }
