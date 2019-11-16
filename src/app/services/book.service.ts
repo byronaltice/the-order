@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { User } from 'firebase';
 import { HttpClient } from '@angular/common/http';
+import { RouteView } from '@ionic/angular/dist/directives/navigation/stack-utils';
 
 export interface Book {
   description: string;
@@ -24,11 +25,19 @@ export interface Rating {
   bookName: string;
   rank?: number;
 }
+export interface Review {
+  overall: number;
+  characters: number;
+  setting: number;
+  plot: number;
+  themes: number;
+}
 export interface UserRatings {
   id?: string;
   userName: string;
   password: string;
   ratings: Rating[];
+  review: Review;
 }
 @Injectable({
   providedIn: 'root'
@@ -110,6 +119,17 @@ export class BookService {
   updateRatings(userRatings: UserRatings) {
     userRatings.userName = userRatings.userName.toLowerCase();
     return this.userRatingsCollection.doc(userRatings.id).update(userRatings)
+  }
+  deleteRatings(allUserRatings: UserRatings[]) {
+    const allUserRatingsCleared = allUserRatings
+    .map( user => {
+      user.ratings = [];
+      return user;
+    });
+    allUserRatings.filter(() => true);
+    allUserRatingsCleared.forEach(user => {
+      this.updateRatings(user);
+    });
   }
   addRatings(userRatings: UserRatings) {
     userRatings.userName = userRatings.userName.toLowerCase();

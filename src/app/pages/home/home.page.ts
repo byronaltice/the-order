@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { Book, BookService, UserRatings as UserInfo } from '../../services/book.service';
-import { AlertController } from '@ionic/angular';
+import { AlertController, ToastController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { UserData } from '../../providers/user-data';
 import { OpaVoteService } from '../../services/opa-vote.service';
+import { ToastOptions } from '@ionic/core';
+import undefined = require('firebase/empty-import');
 
 @Component({
   selector: 'app-home',
@@ -36,6 +38,7 @@ export class HomePage implements OnInit {
     winners: [string]
   };
   opaVotePollWinner: string;
+  pollStatus: string;
 
   constructor(
     private bookService: BookService,
@@ -43,6 +46,7 @@ export class HomePage implements OnInit {
     private alertController: AlertController,
     private router: Router,
     private opaVoteService: OpaVoteService,
+    private toastController: ToastController,
   ) { }
 
   onRenderItems(event) {
@@ -58,6 +62,7 @@ export class HomePage implements OnInit {
       userName: this.getUserName(), 
       ratings: newRankingsForThisUser,
       password: this.getPassword(),
+      review: ratingsOfCurrentUser.review || {characters: 0, plot: 0, themes: 0, setting: 0, overall: 0},
     };
     // Because if you provide an id to a new thing, it will bug out.
     if(ratingsOfCurrentUser) {
@@ -66,6 +71,29 @@ export class HomePage implements OnInit {
     } else {
       this.bookService.addRatings(userInfo);
     }
+  }
+  async presentDeleteAllRatingsConfirmation() {
+    const alert = await this.alertController.create({
+      header: 'WAIT',
+      message: 'Are you ABSOLUTELY SURE you want to delete ALL the users ratings??? NOT REVERSIBLE! Only use this to reset the polls between sessions, or if something goes really wrong.',
+      backdropDismiss: false,
+      buttons: [{
+        text: 'OK DELETE EVERYTHING',
+        role: 'Confirm',
+        cssClass: 'primary',
+        handler: () => {
+          this.bookService.deleteRatings(this.allUsers);
+        },
+      }, {
+        text: 'NO CANCEL',
+        role: 'Cancel',
+        cssClass: 'primary',
+      }],
+    });
+    await alert.present();
+  }
+  deleteAllRatings() {
+    this.bookService.deleteRatings(this.allUsers);
   }
   ngOnInit() {
   }
@@ -84,7 +112,25 @@ export class HomePage implements OnInit {
   getPassword(): string {
     return this.password;
   }
+  async presentAlert() {
+    const alert = await this.alertController.create({
+      header: 'Uh Oh',
+      message: 'You need to log in',
+      backdropDismiss: false,
+      buttons: [{
+        text: 'Go To Log In Page',
+        role: 'Confirm',
+        cssClass: 'primary',
+        handler: () => {
+          this.router.navigateByUrl('/login');
+        },
+      }],
+    });
+    await alert.present();
+  }
   ionViewWillEnter() {
+
+    this.pollStatus = "OPEN";
     setTimeout(() => this.userData.getPassword().then(password => {
       this.userData.getUsername().then(userName => {
         if (!userName) {
@@ -120,11 +166,31 @@ export class HomePage implements OnInit {
             this.books = this.sortCurrentUsersBooksByRating();
             alreadyLoaded = true;
           }
+          
+          const ratingsOfCurrentUser = this.getRatingsOfCurrentUser();
+          const newRankingsForThisUser = [{ bookId: '', rank: 0, bookName: '' }];
+          this.books.forEach((book, rank) => {
+            newRankingsForThisUser[rank] = { bookId: book.id, rank, bookName: book.task };
+          });
+          const userInfo: UserInfo = {
+            userName: this.getUserName(), 
+            ratings: newRankingsForThisUser,
+            password: this.getPassword(),
+            review: (ratingsOfCurrentUser && ratingsOfCurrentUser.review ) || {characters: 0, plot: 0, themes: 0, setting: 0, overall: 0},
+          };
+          // Because if you provide an id to a new thing, it will bug out.
+          if(ratingsOfCurrentUser) {
+            userInfo.id = ratingsOfCurrentUser.id;
+            this.bookService.updateRatings(userInfo)
+          } else {
+            this.bookService.addRatings(userInfo);
+          }
         });
       });
       this.bookService.getOpaVotePollStatuses().subscribe(pollStatuses => {
         this.isOpaVotePollOpen = pollStatuses[0] && pollStatuses[0].status;
         this.isOpaVotePollOpen = this.isOpaVotePollOpen === undefined ? this.isOpaVotePollOpen = true : this.isOpaVotePollOpen;
+        this.pollStatus = this.isOpaVotePollOpen ? "OPEN" : "CLOSED";
         this.opaVotePollId = (pollStatuses[0] && pollStatuses[0].id) || '';
         this.opaVotePollWinner = pollStatuses[0].winner;
       })
@@ -143,28 +209,52 @@ export class HomePage implements OnInit {
       currentUsersInfo.ratings.find(a => a.bookId === currentBook.id).rank 
       - currentUsersInfo.ratings.find(a => a.bookId === nextBook.id).rank);
   }
-  async presentAlert() {
+  async vote(item) {
     const alert = await this.alertController.create({
-      header: 'Uh Oh',
-      message: 'You need to log in',
+      header: 'Remove Book',
+      message: 'Book will be removed from the poll',
       backdropDismiss: false,
       buttons: [{
-        text: 'Go To Log In Page',
+        text: 'OK',
         role: 'Confirm',
         cssClass: 'primary',
         handler: () => {
-          this.router.navigateByUrl('/login');
+          this.remove(item);
+          this.books = this.books.filter(book => book.id !== item);
         },
+      }, {
+        text: 'Cancel',
+        role: 'cancel',
+        cssClass: 'primary',
       }],
     });
     await alert.present();
   }
-  vote(item) {
-    this.remove(item);
-    this.books = this.books.filter(book => book.id !== item);
-  }
   remove(item) {
     this.bookService.removeBook(item.id);
+  }
+  async presentSubmitVotesConfirmation() {
+    const alert = await this.alertController.create({
+      header: 'Confirm',
+      message: 'Are you sure you want to close the poll?',
+      backdropDismiss: false,
+      buttons: [{
+        text: 'Yes',
+        role: 'Confirm',
+        cssClass: 'primary',
+        handler: () => {
+          this.submitVotes();
+        },
+      }, {
+        text: 'Cancel',
+        role: 'Cancel',
+        cssClass: 'primary',
+        handler: () => {
+
+        },
+      }],
+    });
+    await alert.present();
   }
   submitVotes() {
     this.opaVoteService.submitVotes(this.books, this.allUsers)
@@ -208,5 +298,15 @@ export class HomePage implements OnInit {
       console.log('Async operation has ended');
       event.target.complete();
     }, 2000);
+  }
+  async userSubmittedVotes() {
+    const toastOptions: ToastOptions = {
+      header: 'Votes Submitted',
+      message: 'You can still <strong>change your mind</strong> while the poll is <strong>open</strong>. <br/>Just <strong>reorder your choices</strong> and <strong>tap CAST YOUR VOTES</strong> again.',
+      position: 'top',
+      showCloseButton: true,
+    };
+    const toast = await this.toastController.create(toastOptions);
+    toast.present();
   }
 }

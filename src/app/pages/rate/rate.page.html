@@ -1,0 +1,32 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Rate Books</ion-title>
+  </ion-toolbar>
+</ion-header>
+<ion-content>
+  <ion-grid padding>
+    <ion-row>
+      <ion-col>
+    <div>
+      <img  src="assets/thelongway.jpg" alt="The Long Way to a Small, Angry Planet">
+    </div>
+  </ion-col>
+  <ion-col>
+    <ion-item class="reviewScores" *ngFor="let review of averageReviewsAsArray">
+      {{review.key}}: {{review.value}}
+    </ion-item>
+  </ion-col>
+  </ion-row>
+  </ion-grid>
+  <form #rateForm="ngForm">
+    <ion-list lines="full">
+      <ion-item *ngFor="let review of reviews">
+        <ion-label>
+          <ion-text>{{review.key}}</ion-text>
+          <rating [rate]="review.value" (rateChange)="onRateChange($event, review.key)"></rating>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+    <ion-button (click)="saveBookRating()" expand="full">Submit</ion-button>
+  </form>
+</ion-content>

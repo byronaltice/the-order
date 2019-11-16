@@ -69,6 +69,7 @@ export class BookDetailsPage implements OnInit {
     const toastOptions: ToastOptions = {
       header: 'Added a new book',
       position: 'top',
+      showCloseButton: true,
     };
     loading.present().then(async () => {
       if (this.bookId) {
@@ -76,7 +77,7 @@ export class BookDetailsPage implements OnInit {
         const toast = await this.toastController.create(toastOptions);
         this.bookService.updateBook(this.book, this.bookId).then(() => {
           loading.dismiss();
-          this.nav.navigateForward('home');
+          this.nav.navigateForward('tabs/vote');
           toast.present();
         });
       } else {
@@ -84,7 +85,7 @@ export class BookDetailsPage implements OnInit {
         const toast = await this.toastController.create(toastOptions);
         this.bookService.addBook(this.book, this.userName).then(() => {
           loading.dismiss();
-          this.nav.navigateForward('home');
+          this.nav.navigateForward('tabs/vote');
           toast.present();
         });
       }
