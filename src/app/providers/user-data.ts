@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Events, AlertController } from '@ionic/angular';
 import { Storage } from '@ionic/storage';
 import { ValueAccessor } from '@ionic/angular/dist/directives/control-value-accessors/value-accessor';
-import { BookService } from '../services/book.service';
+import { BookService, UserRatings } from '../services/book.service';
 import { Router } from '@angular/router';
 
 
@@ -13,6 +13,7 @@ export class UserData {
   _favorites: string[] = [];
   HAS_LOGGED_IN = 'hasLoggedIn';
   HAS_SEEN_TUTORIAL = 'hasSeenTutorial';
+  ratings: UserRatings[];
 
   constructor(
     public events: Events,
@@ -20,7 +21,11 @@ export class UserData {
     public bookService: BookService,
     private alertController: AlertController,
     private router: Router,
-  ) { }
+  ) {
+    this.bookService.getRatings().subscribe(ratings => {
+      this.ratings = ratings;
+    })
+  }
 
   hasFavorite(sessionName: string): boolean {
     return (this._favorites.indexOf(sessionName) > -1);
@@ -40,17 +45,11 @@ export class UserData {
   login(username: string, admin: boolean, password: string): Promise<any> {
     return this.storage.set(this.HAS_LOGGED_IN, true).then(() => {
       this.setUsername(username);
-      this.bookService.getRatings().subscribe(ratings => {
-        const user = ratings.find(rating => rating.userName === username);
-        if (!user || user.password === password || user.userName + '123' === password) {
-          this.setUsername(username);
-          this.setAdmin(admin);
-          this.setPassword(password);
-          return this.events.publish('user:login');
-        } else {
-          this.presentAlert();
-        }
-      })
+      const user = this.ratings.find(rating => rating.userName === username);
+      this.setUsername(username);
+      this.setPassword(password);
+      this.setAdmin(username === 'byron');
+      return this.events.publish('user:login');
     });
   }
   async presentAlert() {
@@ -103,7 +102,7 @@ export class UserData {
       return value;
     });
   }
-  
+
   setPassword(password: string): Promise<any> {
     return this.storage.set('password', password);
   }

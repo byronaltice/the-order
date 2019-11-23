@@ -27,8 +27,6 @@ export class RatePage implements OnInit {
   ) { }
 
   ngOnInit() {
-
-
   }
 
   ionViewWillEnter() {
@@ -95,6 +93,11 @@ export class RatePage implements OnInit {
               this.averageReviewsAsArray = [];
             }
             this.loaded = true;
+
+            if (!(window.localStorage.getItem('voteLoaded') === 'true')) {
+              window.localStorage.setItem('voteLoaded', 'true');
+              this.router.navigateByUrl('/tabs/vote');
+            }
           });
         })
       }))
@@ -200,8 +203,6 @@ export class RatePage implements OnInit {
     this.user.review = this.bookRating;
     if (this.user) {
       this.bookService.updateRatings(this.user);
-    } else {
-      this.bookService.addRatings(this.user);
     }
     const alert = await this.alertController.create({
       header: 'Submitted',

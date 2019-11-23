@@ -5,7 +5,6 @@ import { Router } from '@angular/router';
 import { UserData } from '../../providers/user-data';
 import { OpaVoteService } from '../../services/opa-vote.service';
 import { ToastOptions } from '@ionic/core';
-import undefined = require('firebase/empty-import');
 
 @Component({
   selector: 'app-home',
@@ -62,14 +61,14 @@ export class HomePage implements OnInit {
       userName: this.getUserName(), 
       ratings: newRankingsForThisUser,
       password: this.getPassword(),
-      review: ratingsOfCurrentUser.review || {characters: 0, plot: 0, themes: 0, setting: 0, overall: 0},
+      review: (ratingsOfCurrentUser && ratingsOfCurrentUser.review ) || {characters: 0, plot: 0, themes: 0, setting: 0, overall: 0},
     };
     // Because if you provide an id to a new thing, it will bug out.
     if(ratingsOfCurrentUser) {
       userInfo.id = ratingsOfCurrentUser.id;
       this.bookService.updateRatings(userInfo)
     } else {
-      this.bookService.addRatings(userInfo);
+      this.presentAlert();
     }
   }
   async presentDeleteAllRatingsConfirmation() {
@@ -168,6 +167,7 @@ export class HomePage implements OnInit {
           }
           
           const ratingsOfCurrentUser = this.getRatingsOfCurrentUser();
+          
           const newRankingsForThisUser = [{ bookId: '', rank: 0, bookName: '' }];
           this.books.forEach((book, rank) => {
             newRankingsForThisUser[rank] = { bookId: book.id, rank, bookName: book.task };
@@ -183,7 +183,7 @@ export class HomePage implements OnInit {
             userInfo.id = ratingsOfCurrentUser.id;
             this.bookService.updateRatings(userInfo)
           } else {
-            this.bookService.addRatings(userInfo);
+            this.presentAlert();
           }
         });
       });
@@ -194,6 +194,10 @@ export class HomePage implements OnInit {
         this.opaVotePollId = (pollStatuses[0] && pollStatuses[0].id) || '';
         this.opaVotePollWinner = pollStatuses[0].winner;
       })
+      if (!(window.localStorage.getItem('rateLoaded') === 'true')) {
+        window.localStorage.setItem('rateLoaded', 'true');
+        this.router.navigateByUrl('/tabs/rate');
+      }
     }), 500)
   }
   sortCurrentUsersBooksByRating() {
