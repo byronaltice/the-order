@@ -17,23 +17,23 @@ export class HomePage implements OnInit {
   userName: string;
   password: string;
   allUsers: UserInfo[];
-  isAdmin: boolean = false;
   isOpaVotePollOpen: boolean = true;
   opaVotePollId: string;
+  userDataObject: { isAdmin, username, password, hasLoggedIn, hasSeenTutorial };
   opaVotePollResponse: {
-    candidates: [], 
-    method: string, 
-    n_votes: number, 
-    title: string, 
+    candidates: [],
+    method: string,
+    n_votes: number,
+    title: string,
     results: {
-      count: [], 
-      n_seats: number, 
-      n_votes: number, 
-      title: string, 
-      method: string, 
-      msg: string, 
+      count: [],
+      n_seats: number,
+      n_votes: number,
+      title: string,
+      method: string,
+      msg: string,
       winners: [number]
-    }, 
+    },
     winners: [string]
   };
   opaVotePollWinner: string;
@@ -58,13 +58,13 @@ export class HomePage implements OnInit {
       newRankingsForThisUser[rank] = { bookId: book.id, rank, bookName: book.task };
     });
     const userInfo: UserInfo = {
-      userName: this.getUserName(), 
+      userName: this.getUserName(),
       ratings: newRankingsForThisUser,
-      password: this.getPassword(),
-      review: (ratingsOfCurrentUser && ratingsOfCurrentUser.review ) || {characters: 0, plot: 0, themes: 0, setting: 0, overall: 0},
+      password: this.userDataObject.password,
+      review: (ratingsOfCurrentUser && ratingsOfCurrentUser.review) || { characters: 0, plot: 0, themes: 0, setting: 0, overall: 0 },
     };
     // Because if you provide an id to a new thing, it will bug out.
-    if(ratingsOfCurrentUser) {
+    if (ratingsOfCurrentUser) {
       userInfo.id = ratingsOfCurrentUser.id;
       this.bookService.updateRatings(userInfo)
     } else {
@@ -95,6 +95,30 @@ export class HomePage implements OnInit {
     this.bookService.deleteRatings(this.allUsers);
   }
   ngOnInit() {
+    setInterval(() => {
+      this.userData.getUserData().then(userDataObject => {
+        this.userDataObject = userDataObject;
+        if (!userDataObject.username) {
+          this.presentAlert();
+          return;
+        }
+      });
+    }, 1000);
+    this.bookService.getRatings().subscribe(ratings => {
+      this.allUsers = ratings;
+      this.sortCurrentUsersBooksByRating();
+    });
+    this.bookService.getBooks().subscribe(bookList => {
+      this.books = bookList;
+    });
+    this.pollStatus = "OPEN";
+    this.bookService.getOpaVotePollStatuses().subscribe(pollStatuses => {
+      this.isOpaVotePollOpen = pollStatuses[0] && pollStatuses[0].status;
+      this.isOpaVotePollOpen = this.isOpaVotePollOpen === undefined ? this.isOpaVotePollOpen = true : this.isOpaVotePollOpen;
+      this.pollStatus = this.isOpaVotePollOpen ? "OPEN" : "CLOSED";
+      this.opaVotePollId = (pollStatuses[0] && pollStatuses[0].id) || '';
+      this.opaVotePollWinner = pollStatuses[0].winner;
+    });
   }
   getRatingsOfCurrentUser() {
     return this.allUsers && this.allUsers.find(rating => rating.userName === this.getUserName());
@@ -107,9 +131,6 @@ export class HomePage implements OnInit {
   }
   setPassword(password: string) {
     this.password = password;
-  }
-  getPassword(): string {
-    return this.password;
   }
   async presentAlert() {
     const alert = await this.alertController.create({
@@ -128,89 +149,18 @@ export class HomePage implements OnInit {
     await alert.present();
   }
   ionViewWillEnter() {
-
-    this.pollStatus = "OPEN";
-    setTimeout(() => this.userData.getPassword().then(password => {
-      this.userData.getUsername().then(userName => {
-        if (!userName) {
-          this.presentAlert();
-          return;
-        }
-        this.setUserName(userName);
-        this.setPassword(password);
-        let alreadyLoaded = false;
-        this.bookService.getRatings().subscribe(ratings => {
-          this.allUsers = ratings;
-          this.userData.isAdmin().then(isAdmin => {
-            this.setAdmin(isAdmin);
-          })
-          if(!alreadyLoaded) {
-            this.books = this.sortCurrentUsersBooksByRating();
-          }
-        });
-        this.bookService.getBooks().subscribe(bookList => {
-          this.books = bookList; 
-          this.books.forEach(book => {
-            if(this.getRatingsOfCurrentUser() && 
-              !this.getRatingsOfCurrentUser().ratings
-              .find((ratedBook) => book.id === ratedBook.bookId) ) {
-              this.getRatingsOfCurrentUser().ratings.push({
-                bookId: book.id,
-                bookName: book.task,
-                rank: book.priority,
-              })
-            }
-          })
-          if(!alreadyLoaded) {
-            this.books = this.sortCurrentUsersBooksByRating();
-            alreadyLoaded = true;
-          }
-          
-          const ratingsOfCurrentUser = this.getRatingsOfCurrentUser();
-          
-          const newRankingsForThisUser = [{ bookId: '', rank: 0, bookName: '' }];
-          this.books.forEach((book, rank) => {
-            newRankingsForThisUser[rank] = { bookId: book.id, rank, bookName: book.task };
-          });
-          const userInfo: UserInfo = {
-            userName: this.getUserName(), 
-            ratings: newRankingsForThisUser,
-            password: this.getPassword(),
-            review: (ratingsOfCurrentUser && ratingsOfCurrentUser.review ) || {characters: 0, plot: 0, themes: 0, setting: 0, overall: 0},
-          };
-          // Because if you provide an id to a new thing, it will bug out.
-          if(ratingsOfCurrentUser) {
-            userInfo.id = ratingsOfCurrentUser.id;
-            this.bookService.updateRatings(userInfo)
-          } else {
-            this.presentAlert();
-          }
-        });
-      });
-      this.bookService.getOpaVotePollStatuses().subscribe(pollStatuses => {
-        this.isOpaVotePollOpen = pollStatuses[0] && pollStatuses[0].status;
-        this.isOpaVotePollOpen = this.isOpaVotePollOpen === undefined ? this.isOpaVotePollOpen = true : this.isOpaVotePollOpen;
-        this.pollStatus = this.isOpaVotePollOpen ? "OPEN" : "CLOSED";
-        this.opaVotePollId = (pollStatuses[0] && pollStatuses[0].id) || '';
-        this.opaVotePollWinner = pollStatuses[0].winner;
-      })
-      if (!(window.localStorage.getItem('rateLoaded') === 'true')) {
-        window.localStorage.setItem('rateLoaded', 'true');
-        this.router.navigateByUrl('/tabs/rate');
-      }
-    }), 500)
   }
   sortCurrentUsersBooksByRating() {
     if (!this.allUsers || !this.books) {
       return this.books;
     }
     const currentUsersInfo = this.allUsers
-    .find( userRating => userRating.userName === this.getUserName());
+      .find(userRating => userRating.userName === this.getUserName());
     if (!currentUsersInfo) {
       return this.books;
     }
-    return this.books.sort((currentBook, nextBook) => 
-      currentUsersInfo.ratings.find(a => a.bookId === currentBook.id).rank 
+    return this.books.sort((currentBook, nextBook) =>
+      currentUsersInfo.ratings.find(a => a.bookId === currentBook.id).rank
       - currentUsersInfo.ratings.find(a => a.bookId === nextBook.id).rank);
   }
   async vote(item) {
@@ -262,37 +212,34 @@ export class HomePage implements OnInit {
   }
   submitVotes() {
     this.opaVoteService.submitVotes(this.books, this.allUsers)
-    .subscribe(
-      (response: {
-        candidates: [], 
-        method: string, 
-        n_votes: number, 
-        title: string, 
-        results: {
-          count: [], 
-          n_seats: number, 
-          n_votes: number, 
-          title: string, 
-          method: string, 
-          msg: string, 
-          winners: [number]
-        }, 
-        winners: [string]
-      }) => {
-        this.opaVotePollResponse = response;
-        this.bookService.updateOpaVotePollStatus({winner: response.winners[0], status: false, id: this.opaVotePollId}, this.opaVotePollId);
-        
-      });
+      .subscribe(
+        (response: {
+          candidates: [],
+          method: string,
+          n_votes: number,
+          title: string,
+          results: {
+            count: [],
+            n_seats: number,
+            n_votes: number,
+            title: string,
+            method: string,
+            msg: string,
+            winners: [number]
+          },
+          winners: [string]
+        }) => {
+          this.opaVotePollResponse = response;
+          this.bookService.updateOpaVotePollStatus({ winner: response.winners[0], status: false, id: this.opaVotePollId }, this.opaVotePollId);
+
+        });
   }
   getItems() {
     this.opaVoteService.getItems();
   }
-  setAdmin(isAdmin: boolean) {
-    this.isAdmin = isAdmin;
-  }
   reopenPoll() {
-    this.bookService.updateOpaVotePollStatus({ winner: 'TBD', status: true, id: this.opaVotePollId}, this.opaVotePollId);
-  }  
+    this.bookService.updateOpaVotePollStatus({ winner: 'TBD', status: true, id: this.opaVotePollId }, this.opaVotePollId);
+  }
   doRefresh(event) {
     console.log('Begin async operation');
 

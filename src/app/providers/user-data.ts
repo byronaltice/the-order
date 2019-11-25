@@ -93,6 +93,24 @@ export class UserData {
     });
   }
 
+  async getUserData() {
+    let [isAdmin, username, password, hasSeenTutorial, hasLoggedIn] =
+    await Promise.all([
+      this.storage.get('isAdmin'),
+      this.storage.get('username'),
+      this.storage.get('password'),
+      this.storage.get(this.HAS_SEEN_TUTORIAL),
+      this.storage.get(this.HAS_LOGGED_IN),
+    ]).then(values => values);
+    return {
+      isAdmin,
+      username,
+      password,
+      hasSeenTutorial,
+      hasLoggedIn,
+    }
+  }
+
   setAdmin(admin: boolean): Promise<any> {
     return this.storage.set('isAdmin', admin);
   }
