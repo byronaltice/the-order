@@ -2,9 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { Book, BookService, UserRatings as UserInfo } from '../../services/book.service';
 import { AlertController, ToastController } from '@ionic/angular';
 import { Router } from '@angular/router';
-import { UserData } from '../../providers/user-data';
+import { UserData, LoginInfo } from '../../providers/user-data';
 import { OpaVoteService } from '../../services/opa-vote.service';
 import { ToastOptions } from '@ionic/core';
+import { Subject, of } from 'rxjs';
+import { takeUntil, mergeMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-home',
@@ -14,12 +16,11 @@ import { ToastOptions } from '@ionic/core';
 export class HomePage implements OnInit {
 
   books: Book[];
-  userName: string;
-  password: string;
+  loginInfo: LoginInfo = {username: '', admin: false, password: ''};
+  unsubscribe = new Subject<void>();
   allUsers: UserInfo[];
   isOpaVotePollOpen: boolean = true;
   opaVotePollId: string;
-  userDataObject: { isAdmin, username, password, hasLoggedIn, hasSeenTutorial };
   opaVotePollResponse: {
     candidates: [],
     method: string,
@@ -58,9 +59,9 @@ export class HomePage implements OnInit {
       newRankingsForThisUser[rank] = { bookId: book.id, rank, bookName: book.task };
     });
     const userInfo: UserInfo = {
-      userName: this.getUserName(),
+      userName: this.loginInfo.username,
       ratings: newRankingsForThisUser,
-      password: this.userDataObject.password,
+      password: this.loginInfo.password,
       review: (ratingsOfCurrentUser && ratingsOfCurrentUser.review) || { characters: 0, plot: 0, themes: 0, setting: 0, overall: 0 },
     };
     // Because if you provide an id to a new thing, it will bug out.
@@ -68,7 +69,7 @@ export class HomePage implements OnInit {
       userInfo.id = ratingsOfCurrentUser.id;
       this.bookService.updateRatings(userInfo)
     } else {
-      this.presentAlert();
+      this.bookService.addRatings(userInfo);
     }
   }
   async presentDeleteAllRatingsConfirmation() {
@@ -89,26 +90,38 @@ export class HomePage implements OnInit {
         cssClass: 'primary',
       }],
     });
+    this.bookService.deleteRatings
     await alert.present();
   }
-  deleteAllRatings() {
-    this.bookService.deleteRatings(this.allUsers);
+  async presentDeleteAllUsersConfirmation() {
+    const alert = await this.alertController.create({
+      header: 'WAIT',
+      message: 'Are you ABSOLUTELY SURE you want to delete ALL the users??? NOT REVERSIBLE!',
+      backdropDismiss: false,
+      buttons: [{
+        text: 'OK DELETE EVERYTHING',
+        role: 'Confirm',
+        cssClass: 'primary',
+        handler: () => {
+          this.bookService.deleteUsers(this.allUsers);
+        },
+      }, {
+        text: 'NO CANCEL',
+        role: 'Cancel',
+        cssClass: 'primary',
+      }],
+    });
+    await alert.present();
   }
   ngOnInit() {
-    setInterval(() => {
-      this.userData.getUserData().then(userDataObject => {
-        this.userDataObject = userDataObject;
-        if (!userDataObject.username) {
-          this.presentAlert();
-          return;
-        }
-      });
-    }, 1000);
-    this.bookService.getRatings().subscribe(ratings => {
-      this.allUsers = ratings;
-      this.sortCurrentUsersBooksByRating();
-    });
-    this.bookService.getBooks().subscribe(bookList => {
+    this.bookService.getRatings().pipe(
+      mergeMap(() => this.bookService.getBooks(this.allUsers, this.loginInfo.username))
+    ).subscribe(asdf => console.debug(asdf));
+    // .subscribe(ratings => {
+    //   this.allUsers = ratings;
+    //   this.sortCurrentUsersBooksByRating();
+    // });
+    this.bookService.getBooks(this.allUsers, this.loginInfo.username).subscribe(bookList => {
       this.books = bookList;
     });
     this.pollStatus = "OPEN";
@@ -121,18 +134,10 @@ export class HomePage implements OnInit {
     });
   }
   getRatingsOfCurrentUser() {
-    return this.allUsers && this.allUsers.find(rating => rating.userName === this.getUserName());
-  }
-  setUserName(userName: string) {
-    this.userName = userName.toLowerCase();
-  }
-  getUserName(): string {
-    return this.userName && this.userName.toLowerCase();
-  }
-  setPassword(password: string) {
-    this.password = password;
+    return this.allUsers && this.allUsers.find(rating => rating.userName === this.loginInfo.username);
   }
   async presentAlert() {
+    console.debug('alert presented');
     const alert = await this.alertController.create({
       header: 'Uh Oh',
       message: 'You need to log in',
@@ -149,19 +154,33 @@ export class HomePage implements OnInit {
     await alert.present();
   }
   ionViewWillEnter() {
+    console.debug('ngOnInit home.page.ts');
+    this.userData.loginInfo.pipe(takeUntil(this.unsubscribe)).subscribe(loginInfo => {
+      console.debug('loginInfo', loginInfo);
+      if (!loginInfo || !loginInfo.username) {
+        this.unsubscribe.next();
+        this.unsubscribe.complete();
+        this.presentAlert();
+        return;
+      }
+      this.loginInfo = loginInfo || { username: '', admin: false, password: '' };
+    });
+    this.userData.load();
+    console.debug('ngOnInit after load');
   }
   sortCurrentUsersBooksByRating() {
+    return;
     if (!this.allUsers || !this.books) {
       return this.books;
     }
     const currentUsersInfo = this.allUsers
-      .find(userRating => userRating.userName === this.getUserName());
+      .find(userRating => userRating.userName === this.loginInfo.username);
     if (!currentUsersInfo) {
       return this.books;
     }
     return this.books.sort((currentBook, nextBook) =>
-      currentUsersInfo.ratings.find(a => a.bookId === currentBook.id).rank
-      - currentUsersInfo.ratings.find(a => a.bookId === nextBook.id).rank);
+      (currentUsersInfo.ratings.find(a => a.bookId === currentBook.id) || {}).rank
+      - (currentUsersInfo.ratings.find(a => a.bookId === nextBook.id) || {}).rank);
   }
   async vote(item) {
     const alert = await this.alertController.create({

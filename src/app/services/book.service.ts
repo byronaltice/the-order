@@ -2,9 +2,7 @@ import { Injectable } from '@angular/core';
 import { AngularFirestore, AngularFirestoreCollection } from 'angularfire2/firestore';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { User } from 'firebase';
 import { HttpClient } from '@angular/common/http';
-import { RouteView } from '@ionic/angular/dist/directives/navigation/stack-utils';
 
 export interface Book {
   description: string;
@@ -50,7 +48,7 @@ export class BookService {
   private books: Observable<Book[]>;
   private opaVotePollStatus: Observable<PollStatus[]>;
   private ratings: Observable<UserRatings[]>;
- 
+
   constructor(db: AngularFirestore, public httpClient: HttpClient) {
     this.booksCollection = db.collection<Book>('books');
     this.books = this.booksCollection.snapshotChanges().pipe(
@@ -62,7 +60,7 @@ export class BookService {
         });
       })
     );
-    this.userRatingsCollection = db .collection<UserRatings>('userRatings');
+    this.userRatingsCollection = db.collection<UserRatings>('userRatings');
     this.ratings = this.userRatingsCollection.snapshotChanges().pipe(
       map(actions => {
         return actions.map(a => {
@@ -83,7 +81,7 @@ export class BookService {
       })
     )
   }
- 
+
   getOpaVotePollStatuses() {
     return this.opaVotePollStatus;
   }
@@ -93,22 +91,32 @@ export class BookService {
   updateOpaVotePollStatus(opaVotePollStatus: PollStatus, id: string) {
     return this.opaVotePollStatusCollection.doc(id).update(opaVotePollStatus);
   }
-  getBooks() {
-    return this.books;
+  getBooks(allUsers: UserRatings[], username: string) {
+    const currentUsersInfo = allUsers
+      .find(userRating => userRating.userName === username);
+    if (!currentUsersInfo) {
+      return this.books;
+    }
+    return this.books.pipe(
+      map(books => books.sort((currentBook, nextBook) =>
+        (currentUsersInfo.ratings.find(a => a.bookId === currentBook.id) || {}).rank
+        - (currentUsersInfo.ratings.find(a => a.bookId === nextBook.id) || {}).rank
+      ))
+    )
   }
- 
+
   getBook(id) {
     return this.booksCollection.doc<Book>(id).valueChanges();
   }
- 
+
   updateBook(book: Book, id: string) {
     return this.booksCollection.doc(id).update(book);
   }
- 
+
   addBook(book: Book, userName: String) {
     return this.booksCollection.add(book);
   }
- 
+
   removeBook(id) {
     return this.booksCollection.doc(id).delete();
   }
@@ -122,14 +130,19 @@ export class BookService {
   }
   deleteRatings(allUserRatings: UserRatings[]) {
     const allUserRatingsCleared = allUserRatings
-    .map( user => {
-      user.ratings = [];
-      return user;
-    });
+      .map(user => {
+        user.ratings = [];
+        return user;
+      });
     allUserRatings.filter(() => true);
     allUserRatingsCleared.forEach(user => {
       this.updateRatings(user);
     });
+  }
+  deleteUsers(allUserRatings: UserRatings[]) {
+    allUserRatings.forEach(user => {
+      this.userRatingsCollection.doc(user.id).delete();
+    })
   }
   addRatings(userRatings: UserRatings) {
     userRatings.userName = userRatings.userName.toLowerCase();

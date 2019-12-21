@@ -58,7 +58,9 @@ export class AppComponent implements OnInit {
   }
 
   async ngOnInit() {
-    this.checkLoginStatus();
+    this.userData.loginInfo.subscribe(loginInfo => {
+        this.updateLoggedInStatus(!!(loginInfo && loginInfo.username));
+    });
     this.listenForLoginEvents();
 
     this.swUpdate.available.subscribe(async res => {
@@ -82,12 +84,6 @@ export class AppComponent implements OnInit {
     this.platform.ready().then(() => {
       this.statusBar.styleDefault();
       this.splashScreen.hide();
-    });
-  }
-
-  checkLoginStatus() {
-    return this.userData.isLoggedIn().then(loggedIn => {
-      return this.updateLoggedInStatus(loggedIn);
     });
   }
 

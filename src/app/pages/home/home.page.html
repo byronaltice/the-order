@@ -23,7 +23,7 @@
         <ion-reorder></ion-reorder>
         </ion-item>
       <ion-item-options side="end">
-        <ion-item-option *ngIf="isAdmin" (click)="vote(item)" color="danger">
+        <ion-item-option *ngIf="loginInfo.admin" (click)="vote(item)" color="danger">
           Delete Book
           <ion-icon name="trash" slot="end"></ion-icon>
         </ion-item-option>
@@ -42,7 +42,7 @@
     <ion-fab-button *ngIf="isOpaVotePollOpen" routerLink="/book-details" routerDirection="forward">
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>
-    <ion-fab-button *ngIf="isAdmin && isOpaVotePollOpen" (click)="submitVotes()">
+    <ion-fab-button *ngIf="loginInfo.admin && isOpaVotePollOpen" (click)="submitVotes()">
       <ion-icon name="done-all"></ion-icon>
     </ion-fab-button>
   </ion-fab> -->
@@ -55,7 +55,7 @@
   <ion-button *ngIf="isOpaVotePollOpen" routerLink="/book-details" routerDirection="forward">
     Add a Book
   </ion-button>
-  <ion-button *ngIf="isAdmin && isOpaVotePollOpen" (click)="presentSubmitVotesConfirmation()">
+  <ion-button *ngIf="loginInfo.admin && isOpaVotePollOpen" (click)="presentSubmitVotesConfirmation()">
     Close Poll (Admin)
   </ion-button>
   <ion-button (click)="reopenPoll()" *ngIf="!isOpaVotePollOpen">
@@ -63,5 +63,8 @@
   </ion-button>
   <ion-button (click)="presentDeleteAllRatingsConfirmation()" *ngIf="!isOpaVotePollOpen">
     Delete All Poll Data (Admin)
+  </ion-button>
+  <ion-button (click)="presentDeleteAllUsersConfirmation()" *ngIf="!isOpaVotePollOpen">
+    Delete All Data (Admin)
   </ion-button>
 </ion-content>

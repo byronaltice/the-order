@@ -21,7 +21,6 @@ export class BookDetailsPage implements OnInit {
     priority: 2,
     user:  '',
   };
-  userName: string;
  
   bookId = null;
  
@@ -36,15 +35,17 @@ export class BookDetailsPage implements OnInit {
    * test commit
    */
   ngOnInit() {
+    this.userData.loginInfo.subscribe(loginInfo => {
+      this.book.user = loginInfo.username;
+      console.debug('subscribed');
+    });
+    this.userData.load();
     this.bookId = this.route.snapshot.params['id'];
     if (this.bookId)  {
       this.loadBook();
     }
   }
   ionViewWillEnter() {
-    this.userData.getUsername().then(userName => {
-      this.book.user = userName;
-    })
   }
  
   async loadBook() {
@@ -83,7 +84,7 @@ export class BookDetailsPage implements OnInit {
       } else {
         toastOptions.header = "Added";
         const toast = await this.toastController.create(toastOptions);
-        this.bookService.addBook(this.book, this.userName).then(() => {
+        this.bookService.addBook(this.book, this.book.user).then(() => {
           loading.dismiss();
           this.nav.navigateForward('tabs/vote');
           toast.present();
